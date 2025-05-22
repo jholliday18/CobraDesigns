@@ -1,170 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CobraDesigns</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlowTasks</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <style>
-        /* Your CSS styles here */
         body {
-            background-color: black;
-            color: white;
-            font-family: Geneva, sans-serif; /* Change font family for the entire document */
-            margin: 0;
+            background: #f8f9fa;
         }
 
-        header {
-            background-color: black;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* To separate logo, text, and menu icon */
-            border-bottom: 1px solid white;
-            transition: padding-left 0.5s; /* Add transition for smooth effect */
+        .drag-over {
+            background-color: #f1f5f9 !important;
         }
 
-            header img {
-                max-width: 100px;
-                height: auto;
-            }
-
-        .menu-icon {
-            cursor: pointer;
-        }
-
-        .menu-button {
-            display: flex;
-            align-items: center;
-            margin-right: 20px; /* Adjust the margin as needed */
-        }
-
-            .menu-button ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .menu-button li {
-                width: 30px;
-                height: 4px;
-                background-color: white;
-                margin: 5px 0;
-            }
-
-        /* The side navigation menu */
-        .sidenav {
-            height: 100%; /* 100% Full-height */
-            width: 0; /* 0 width - change this with JavaScript */
-            position: fixed; /* Stay in place */
-            z-index: 1; /* Stay on top */
-            top: 0; /* Stay at the top */
-            left: 0;
-            background-color: white; /* Change default background color */
-            overflow-x: hidden; /* Disable horizontal scroll */
-            padding-top: 60px; /* Place content 60px from the top */
-            transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
-        }
-
-            /* The navigation menu links */
-            .sidenav a {
-                padding: 8px 8px 8px 32px;
-                text-decoration: none;
-                font-size: 25px;
-                color: black; /* Change default text color */
-                display: block;
-                transition: 0.3s;
-                text-align: center;
-            }
-
-                /* Change link color on hover */
-                .sidenav a:hover {
-                    background-color: lightgrey; /* Change hover background color */
-                    color: white; /* Change hover text color */
-                }
-
-            /* Position and style the close button (top right corner) */
-            .sidenav .closebtn {
-                position: absolute;
-                top: 0;
-                right: 25px;
-                font-size: 36px;
-                margin-left: 50px;
-                color: black; /* Change close button color */
-            }
-
-        /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
-        #main {
-            transition: padding-left .5s; /* Add transition for smooth effect */
-            padding: 20px;
-            padding-left: 0; /* Set default padding */
-        }
-
-        /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-        @media screen and (max-height: 450px) {
-            .sidenav {
-                padding-top: 15px;
-            }
-
-                .sidenav a {
-                    font-size: 18px;
-                }
-        }
-
-        h1 {
-            font-size: 32px; /* Adjust the font size for "CobraDesigns" */
+        .dragging {
+            opacity: 0.5;
         }
     </style>
 </head>
-<body>
-    <header>
-        <div>
-            <img src="Cobraphoto.png" alt="Logo">
-        </div>
-        <h1>CobraDesigns</h1>
-        <div class="menu-icon" onclick="openNav()">
-            <div class="menu-button">
-                <ul>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                </ul>
-            </div>
-        </div>
-    </header>
+<body class="bg-[#f9fafb] text-[#111827] font-sans">
 
-    <nav>
-        <!-- Keeping empty for now -->
-    </nav>
-
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <a href="#">About</a>
-        <a href="#">Services</a>
-        <a href="#">Clients</a>
-        <a href="#">Contact</a>
+    <!-- Columns -->
+    <div class="flex flex-1 overflow-auto p-4 space-x-4 min-h-[calc(100vh-120px)]">
+        <div id="todo" class="flex-1 bg-white rounded-lg shadow-sm p-4 space-y-2 transition">
+            <h2 class="text-lg font-semibold mb-2">To Do</h2>
+        </div>
+        <div id="doing" class="flex-1 bg-white rounded-lg shadow-sm p-4 space-y-2 transition">
+            <h2 class="text-lg font-semibold mb-2">Doing</h2>
+        </div>
+        <div id="done" class="flex-1 bg-white rounded-lg shadow-sm p-4 space-y-2 transition">
+            <h2 class="text-lg font-semibold mb-2">Done</h2>
+        </div>
     </div>
 
-    <div id="main">
-        <!-- Your main content here -->
-        <h2>Main Content</h2>
-        <p>This is the main content of your page.</p>
+    <!-- Delete Area (hidden on load, shown while dragging) -->
+    <div id="delete-area"
+         class="fixed bottom-24 left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center text-2xl font-bold text-red-500 select-none transition-colors"
+         style="display:none; cursor: pointer;">
+        ×
+    </div>
+
+    <!-- Input (Sticky Footer) -->
+    <form id="task-form" class="fixed bottom-6 w-full flex justify-center pointer-events-none">
+        <input type="text"
+               id="task-input"
+               placeholder="Add a task..."
+               class="pointer-events-auto w-3/4 max-w-md bg-white text-[#111827] placeholder-gray-400 px-5 py-3 rounded-full shadow-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#a5b4fc] transition-all" />
+    </form>
+
+    <!-- Minimalist Login Overlay -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-white/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-500">
+        <form id="login-form" class="bg-white shadow-md rounded-2xl p-8 w-80 space-y-4 text-center">
+            <div class="mb-6 text-2xl font-semibold text-gray-800">Welcome</div>
+            <input type="text"
+                   placeholder="username"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-full text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 transition" />
+            <input type="password"
+                   placeholder="password"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-full text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 transition" />
+            <button type="submit"
+                    class="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-full transition-all">
+                log in
+            </button>
+        </form>
     </div>
 
     <script>
-        /* Open the sidenav */
-        function openNav() {
-            document.getElementById("mySidenav").style.width = "250px"; // Adjust the width as needed
-            document.getElementById("main").style.paddingLeft = "250px"; // Adjust padding when sidebar opens
-            document.querySelector('header').style.paddingLeft = '250px'; // Adjust header padding when sidebar opens
+        const form = document.getElementById('task-form');
+        const input = document.getElementById('task-input');
+        const columns = ['todo', 'doing', 'done'].map(id => document.getElementById(id));
+        const deleteArea = document.getElementById('delete-area');
+
+        let ghost = null;
+        let draggedText = null;
+        let activeDropZone = null;
+        let originalTask = null;
+
+        // Hide delete area initially
+        deleteArea.style.display = "none";
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+
+            const task = createTaskElement(text);
+            document.getElementById('todo').appendChild(task);
+            input.value = '';
+        });
+
+        function createTaskElement(text) {
+            const task = document.createElement('div');
+            task.className = "bg-white border border-gray-100 px-3 py-2 rounded shadow-sm cursor-grab hover:shadow-md transition-shadow";
+            task.textContent = text;
+            task.dataset.text = text;
+
+            // --- Mouse drag events ---
+            task.setAttribute("draggable", true);
+
+            task.addEventListener('dragstart', () => {
+                draggedText = text;
+                originalTask = task;
+                ghost = createGhost(text);
+                document.body.appendChild(ghost);
+
+                deleteArea.style.display = "flex";
+            });
+
+            task.addEventListener('dragend', () => {
+                if (ghost) ghost.remove();
+
+                if (activeDropZone === deleteArea && draggedText) {
+                    // Delete the original task, no re-adding
+                    originalTask.remove();
+                } else if (activeDropZone && draggedText) {
+                    animateTypingDrop(draggedText, activeDropZone);
+                    originalTask.remove();
+                }
+                draggedText = null;
+                originalTask = null;
+                activeDropZone = null;
+
+                deleteArea.style.display = "none";
+            });
+
+            // --- Touch events ---
+            task.addEventListener('touchstart', e => {
+                const touch = e.touches[0];
+                draggedText = text;
+                originalTask = task;
+
+                ghost = createGhost(text);
+                ghost.style.top = `${touch.clientY}px`;
+                ghost.style.left = `${touch.clientX}px`;
+                document.body.appendChild(ghost);
+
+                deleteArea.style.display = "flex";
+            });
+
+            task.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (ghost) {
+                    ghost.style.top = `${touch.clientY}px`;
+                    ghost.style.left = `${touch.clientX}px`;
+                }
+
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                activeDropZone = target?.closest('#todo, #doing, #done, #delete-area') || null;
+            });
+
+            task.addEventListener('touchend', () => {
+                if (ghost) ghost.remove();
+
+                if (activeDropZone === deleteArea && draggedText) {
+                    originalTask.remove();
+                } else if (activeDropZone && draggedText) {
+                    animateTypingDrop(draggedText, activeDropZone);
+                    originalTask.remove();
+                }
+                draggedText = null;
+                originalTask = null;
+                activeDropZone = null;
+
+                deleteArea.style.display = "none";
+            });
+
+            return task;
         }
 
-        /* Close/hide the sidenav */
-        function closeNav() {
-            document.getElementById("mySidenav").style.width = "0";
-            document.getElementById("main").style.paddingLeft = "0"; // Reset padding when sidebar closes
-            document.querySelector('header').style.paddingLeft = '0'; // Reset header padding when sidebar closes
+        function createGhost(text) {
+            const el = document.createElement('div');
+            el.textContent = text;
+            el.className = "fixed px-3 py-2 rounded shadow-lg bg-white border border-gray-300 pointer-events-none opacity-90 text-sm";
+            el.style.zIndex = 1000;
+            el.style.transform = "translate(-50%, -50%)";
+            return el;
         }
+
+        // --- Handle mouseover column drop detection ---
+        columns.forEach(col => {
+            col.addEventListener('dragover', e => {
+                e.preventDefault();
+                activeDropZone = col;
+                col.classList.add("drag-over");
+            });
+
+            col.addEventListener('dragleave', () => {
+                col.classList.remove("drag-over");
+            });
+
+            col.addEventListener('drop', e => {
+                e.preventDefault();
+                if (ghost) ghost.remove();
+
+                if (activeDropZone === deleteArea && draggedText) {
+                    originalTask.remove();
+                } else if (draggedText && activeDropZone) {
+                    animateTypingDrop(draggedText, activeDropZone);
+                    originalTask.remove();
+                }
+                draggedText = null;
+                originalTask = null;
+                if (activeDropZone) activeDropZone.classList.remove("drag-over");
+                activeDropZone = null;
+
+                deleteArea.style.display = "none";
+            });
+        });
+
+        // Also add dragover/drop listeners on deleteArea itself
+        deleteArea.addEventListener('dragover', e => {
+            e.preventDefault();
+            activeDropZone = deleteArea;
+            deleteArea.classList.add('bg-red-100', 'text-red-700');
+        });
+        deleteArea.addEventListener('dragleave', e => {
+            deleteArea.classList.remove('bg-red-100', 'text-red-700');
+            if (activeDropZone === deleteArea) activeDropZone = null;
+        });
+        deleteArea.addEventListener('drop', e => {
+            e.preventDefault();
+            if (ghost) ghost.remove();
+            if (draggedText && activeDropZone === deleteArea) {
+                originalTask.remove();
+            }
+            draggedText = null;
+            originalTask = null;
+            activeDropZone = null;
+            deleteArea.style.display = "none";
+            deleteArea.classList.remove('bg-red-100', 'text-red-700');
+        });
+
+        function animateTypingDrop(text, container) {
+            const task = document.createElement('div');
+            task.className = "bg-white border border-gray-200 px-3 py-2 rounded shadow-sm cursor-grab hover:shadow-md transition-shadow";
+            task.textContent = '';
+            container.appendChild(task);
+
+            let i = 0;
+            const interval = setInterval(() => {
+                task.textContent += text[i];
+                i++;
+                if (i >= text.length) {
+                    clearInterval(interval);
+
+                    // Replace with real task element so it can be dragged again
+                    const finalTask = createTaskElement(text);
+                    container.replaceChild(finalTask, task);
+                }
+            }, 30); // Typing speed (ms per character)
+        }
+
+        // Minimal Login Handler
+        const loginScreen = document.getElementById("login-screen");
+        const loginForm = document.getElementById("login-form");
+
+        loginForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            loginScreen.classList.add("opacity-0");
+            setTimeout(() => {
+                loginScreen.style.display = "none";
+            }, 500);
+        });
+
+
     </script>
 </body>
 </html>
